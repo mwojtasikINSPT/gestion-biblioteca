@@ -1,14 +1,18 @@
 package views;
 
+import controllers.LectorController;
+import controllers.LibroController;
 import controllers.PrestamoController;
+import dtos.LectorDTO;
+import dtos.LibroDTO;
 import dtos.PrestamoDTO;
 import utils.Mensajes;
 import utils.Mostrar;
-import java.util.List;
 import java.util.Scanner;
 import utils.Validaciones;
 
 public class PrestamoView {
+
     private final PrestamoController prestamoController;
     private final Scanner scanner;
 
@@ -20,11 +24,11 @@ public class PrestamoView {
     public void mostrarMenu() {
         int opcion;
         do {
-            String menuTexto = "\n--- GESTIÓN DE PRÉSTAMOS ---\n" +
-                    "1. Registrar Préstamo\n" +
-                    "2. Listar Préstamos\n" +
-                    "3. Cancelar Préstamo\n" +
-                    "0. Volver al Menú Principal";
+            String menuTexto = "\n--- GESTIÓN DE PRÉSTAMOS ---\n"
+                    + "1. Registrar Préstamo\n"
+                    + "2. Listar Préstamos\n"
+                    + "3. Cancelar Préstamo\n"
+                    + "0. Volver al Menú Principal";
 
             opcion = Mostrar.Menu(menuTexto, scanner);
 
@@ -71,15 +75,28 @@ public class PrestamoView {
 
     private void listar() {
         Mostrar.Titulo("Lista de Préstamos");
-        List<PrestamoDTO> prestamos = prestamoController.listarPrestamos();
-        
-        if (prestamos.isEmpty()) {
+
+        if (!prestamoController.hayRegistros()) {
             mostrarTexto(Mensajes.SIN_REGISTROS);
             return;
         }
 
-        for (PrestamoDTO p : prestamos) {
-            mostrarTexto("ID Libro: " + p.getIdLibro() + " | ID Lector: " + p.getIdLector());
+        // Instanciamos los controladores necesarios si no los tenés globales
+        LectorController lectorController = new LectorController();
+        LibroController libroController = new LibroController();
+
+        for (PrestamoDTO p : prestamoController.listarPrestamos()) {
+            LectorDTO lector = lectorController.buscarLectorPorId(p.getIdLector());
+            LibroDTO libro = libroController.buscarLibroPorId(p.getIdLibro());
+
+            String nombreLector = (lector != null) ? lector.getNombre() + " " + lector.getApellido() : "Lector no encontrado";
+            String tituloLibro = (libro != null) ? libro.getTitulo() : "Libro no encontrado";
+
+            String detalle = "Préstamo:\n"
+                    + "     Libro:  [" + p.getIdLibro() + "] " + tituloLibro + "\n"
+                    + "     Lector: [" + p.getIdLector() + "] " + nombreLector;
+
+            mostrarTexto(detalle);
         }
     }
 

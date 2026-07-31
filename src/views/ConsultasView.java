@@ -3,6 +3,7 @@ package views;
 import controllers.ConsultasController;
 import utils.Mensajes;
 import utils.Mostrar;
+import utils.Validaciones;
 import java.util.Scanner;
 
 public class ConsultasView {
@@ -18,23 +19,23 @@ public class ConsultasView {
     public void mostrarMenu() {
         int opcion;
         do {
-            String menuTexto = "\n--- MENÚ DE CONSULTAS ---\n"
-                    + "1. Ver pacientes con su cama asignada\n"
-                    + "2. Ver pacientes atendidos por un médico\n"
-                    + "3. Ver médico asignado a un paciente\n"
+            String menuTexto = "\n--- BÚSQUEDAS Y CONSULTAS ---\n"
+                    + "1. Consultar el libro prestado a un lector\n"
+                    + "2. Consultar los lectores atendidos por un bibliotecario\n"
+                    + "3. Consultar el bibliotecario asignado a un lector\n"
                     + "0. Volver al Menú Principal";
 
             opcion = Mostrar.Menu(menuTexto, scanner);
 
             switch (opcion) {
                 case 1:
-                    System.out.println("Pendiente...");
+                    consultarLibroDeLector();
                     break;
                 case 2:
-                    System.out.println("Pendiente...");
+                    consultarLectoresDeBibliotecario();
                     break;
                 case 3:
-                    System.out.println("Pendiente...");
+                    consultarBibliotecarioDeLector();
                     break;
                 case 0:
                     mostrarTexto(Mensajes.VOLVIENDO);
@@ -50,7 +51,60 @@ public class ConsultasView {
         System.out.println("\n---> " + texto);
     }
 
- 
+    private void consultarLibroDeLector() {
+        Mostrar.Titulo("Consultar Libro Prestado a un Lector");
+        
+        if (!consultasController.hayPrestamos()) {
+            mostrarTexto("Actualmente no hay ningún préstamo registrado en el sistema.");
+            return;
+        }
+
+        System.out.print(Mensajes.PEDIR_DATO + "ID del lector: ");
+        String idLector = Validaciones.normalizarTexto(scanner.nextLine());
+
+        try {
+            String resultado = consultasController.consultarLibroPrestadoALector(idLector);
+            System.out.println("\n" + resultado);
+        } catch (IllegalArgumentException e) {
+            mostrarTexto(e.getMessage());
+        }
     }
 
+    private void consultarLectoresDeBibliotecario() {
+        Mostrar.Titulo("Consultar Lectores por Bibliotecario");
+        
+        if (!consultasController.hayAsignaciones()) {
+            mostrarTexto("Actualmente no hay asignaciones registradas en el sistema.");
+            return;
+        }
 
+        System.out.print(Mensajes.PEDIR_DATO + "ID del bibliotecario: ");
+        String idBibliotecario = Validaciones.normalizarTexto(scanner.nextLine());
+
+        try {
+            String resultado = consultasController.consultarLectoresPorBibliotecario(idBibliotecario);
+            System.out.println("\n" + resultado);
+        } catch (IllegalArgumentException e) {
+            mostrarTexto(e.getMessage());
+        }
+    }
+
+    private void consultarBibliotecarioDeLector() {
+        Mostrar.Titulo("Consultar Bibliotecario Asignado a un Lector");
+        
+        if (!consultasController.hayAsignaciones()) {
+            mostrarTexto("Actualmente no hay asignaciones registradas en el sistema.");
+            return;
+        }
+
+        System.out.print(Mensajes.PEDIR_DATO + "ID del lector: ");
+        String idLector = Validaciones.normalizarTexto(scanner.nextLine());
+
+        try {
+            String resultado = consultasController.consultarBibliotecarioDeLector(idLector);
+            System.out.println("\n" + resultado);
+        } catch (IllegalArgumentException e) {
+            mostrarTexto(e.getMessage());
+        }
+    }
+}

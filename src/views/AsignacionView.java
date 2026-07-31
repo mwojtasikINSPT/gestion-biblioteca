@@ -1,14 +1,18 @@
 package views;
 
 import controllers.AsignacionController;
+import controllers.BibliotecarioController;
+import controllers.LectorController;
 import dtos.AsignacionDTO;
+import dtos.BibliotecarioDTO;
+import dtos.LectorDTO;
 import utils.Mensajes;
 import utils.Mostrar;
-import java.util.List;
 import java.util.Scanner;
 import utils.Validaciones;
 
 public class AsignacionView {
+
     private final AsignacionController asignacionController;
     private final Scanner scanner;
 
@@ -20,12 +24,12 @@ public class AsignacionView {
     public void mostrarMenu() {
         int opcion;
         do {
-            String menuTexto = "\n--- GESTIÓN DE ASIGNACIONES (BIBLIOTECARIO - LECTOR) ---\n" +
-                    "1. Asignar Bibliotecario a Lector\n" +
-                    "2. Listar Asignaciones\n" +
-                    "3. Modificar Asignación\n" +
-                    "4. Cancelar Asignación\n" +
-                    "0. Volver al Menú Principal";
+            String menuTexto = "\n--- GESTIÓN DE ASIGNACIONES (BIBLIOTECARIO - LECTOR) ---\n"
+                    + "1. Asignar Bibliotecario a Lector\n"
+                    + "2. Listar Asignaciones\n"
+                    + "3. Modificar Asignación\n"
+                    + "4. Cancelar Asignación\n"
+                    + "0. Volver al Menú Principal";
 
             opcion = Mostrar.Menu(menuTexto, scanner);
 
@@ -53,7 +57,7 @@ public class AsignacionView {
     }
 
     private void mostrarTexto(String texto) {
-        System.out.println("\n---> " + texto);
+        System.out.println("\n" + texto);
     }
 
     private void asignar() {
@@ -75,26 +79,39 @@ public class AsignacionView {
 
     private void listar() {
         Mostrar.Titulo("Lista de Asignaciones");
-        List<AsignacionDTO> asignaciones = asignacionController.listarAsignaciones();
-        
-        if (asignaciones.isEmpty()) {
+
+        if (!asignacionController.hayRegistros()) {
             mostrarTexto(Mensajes.SIN_REGISTROS);
             return;
         }
 
-        for (AsignacionDTO a : asignaciones) {
-            mostrarTexto("ID Bibliotecario: " + a.getIdBibliotecario() + " | ID Lector: " + a.getIdLector());
+        // Instanciamos los controladores necesarios si no los tenés globales
+        LectorController lectorController = new LectorController();
+        BibliotecarioController bibliotecarioController = new BibliotecarioController();
+
+        for (AsignacionDTO a : asignacionController.listarAsignaciones()) {
+            LectorDTO lector = lectorController.buscarLectorPorId(a.getIdLector());
+            BibliotecarioDTO biblio = bibliotecarioController.buscarBibliotecarioPorId(a.getIdBibliotecario());
+
+            String nombreLector = (lector != null) ? lector.getNombre() + " " + lector.getApellido() : "Lector no encontrado";
+            String nombreBiblio = (biblio != null) ? biblio.getNombre() + " " + biblio.getApellido() : "Bibliotecario no encontrado";
+
+            String detalle = "Asignación:\n"
+                    + "     Bibliotecario: [" + a.getIdBibliotecario() + "] " + nombreBiblio + "\n"
+                    + "     Lector:        [" + a.getIdLector() + "] " + nombreLector;
+
+            mostrarTexto(detalle);
         }
     }
 
     private void modificar() {
         Mostrar.Titulo("Modificar Asignación");
-        
+
         if (!asignacionController.hayRegistros()) {
             mostrarTexto(Mensajes.SIN_REGISTROS);
             return;
         }
-        
+
         mostrarTexto(Mensajes.PEDIR_DATO + "ID del lector de la asignación a modificar: ");
         String idLector = Validaciones.normalizarTexto(scanner.nextLine());
 
@@ -111,12 +128,12 @@ public class AsignacionView {
 
     private void cancelar() {
         Mostrar.Titulo("Cancelar Asignación");
-        
+
         if (!asignacionController.hayRegistros()) {
             mostrarTexto(Mensajes.SIN_REGISTROS);
             return;
         }
-        
+
         mostrarTexto(Mensajes.PEDIR_DATO + "ID del lector de la asignación a cancelar: ");
         String idLector = Validaciones.normalizarTexto(scanner.nextLine());
 
