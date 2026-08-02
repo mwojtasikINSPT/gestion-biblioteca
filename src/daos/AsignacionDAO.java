@@ -38,7 +38,8 @@ public class AsignacionDAO implements ICrud<Asignacion, String> {
         // Sobrescribo el archivo escribiendo cada entidad y sus respectivos atributos
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(ARCHIVO))) {
             for (Asignacion asignacion : asignaciones) {
-                bw.write(asignacion.getIdBibliotecario() + ","
+                bw.write(asignacion.getIdAsignacion() + ","
+                        + asignacion.getIdBibliotecario() + ","
                         + asignacion.getIdLector());
                 bw.newLine();
             }
