@@ -69,7 +69,7 @@ public class LectorView {
                 lectorController.obtenerIdsHistoricos(),
                 "LEC");
         mostrarTexto("ID asignado automáticamente: " + idGenerado);
-        
+
         boolean dniRepetido;
         mostrarTexto(Mensajes.PEDIR_DATO + "DNI (8 dígitos): ");
         String dni = scanner.nextLine();
@@ -129,13 +129,9 @@ public class LectorView {
         String id = Validaciones.normalizarTexto(scanner.nextLine());
 
         try {
+            // el controlador ya lanza excepción si no existe
             LectorDTO l = lectorController.buscarLectorPorId(id);
-            if (l != null) {
-                mostrarTexto("Encontrado -> ID: " + l.getId() + " | DNI: " + l.getDni() + " | " + l.getNombre() + " "
-                        + l.getApellido());
-            } else {
-                Mostrar.ErrorNoEncontrado("Lector", id);
-            }
+            mostrarTexto("Encontrado -> ID: " + l.getId() + " | DNI: " + l.getDni() + " | " + l.getNombre() + " " + l.getApellido());
         } catch (IllegalArgumentException e) {
             mostrarTexto(e.getMessage());
         }
@@ -143,12 +139,12 @@ public class LectorView {
 
     private void modificar() {
         Mostrar.Titulo("Modificar Lector");
-        
+
         if (!lectorController.hayRegistros()) {
             mostrarTexto(Mensajes.SIN_REGISTROS);
             return;
         }
-        
+
         mostrarTexto(Mensajes.PEDIR_DATO + "ID del lector a modificar: ");
         String id = Validaciones.normalizarTexto(scanner.nextLine());
 
@@ -156,11 +152,6 @@ public class LectorView {
         try {
             existente = lectorController.buscarLectorPorId(id);
         } catch (IllegalArgumentException e) {
-            Mostrar.ErrorNoEncontrado("Lector", id);
-            return;
-        }
-
-        if (existente == null) {
             Mostrar.ErrorNoEncontrado("Lector", id);
             return;
         }
@@ -174,12 +165,12 @@ public class LectorView {
             mostrarTexto("Nuevo DNI (8 dígitos): ");
             dni = scanner.nextLine();
             dniRepetido = lectorController.existeDni(dni);
-            
+
             if (!dni.equals(existente.getDni()) && dniRepetido) {
-                 mostrarTexto("Ya existe un lector registrado con ese DNI.");
-                 dniRepetido = true;
+                mostrarTexto("Ya existe un lector registrado con ese DNI.");
+                dniRepetido = true;
             } else {
-                 dniRepetido = false;
+                dniRepetido = false;
             }
 
             if (!Validaciones.esDniValido(dni)) {

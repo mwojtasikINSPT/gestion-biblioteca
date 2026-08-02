@@ -75,7 +75,7 @@ public class LibroView {
 
         String titulo;
         do {
-            System.out.print(Mensajes.PEDIR_DATO + "Título: ");
+            mostrarTexto(Mensajes.PEDIR_DATO + "Título: ");
             titulo = scanner.nextLine().trim();
             if (titulo.isEmpty()) {
                 mostrarTexto(Mensajes.ERROR_DATO);
@@ -84,7 +84,7 @@ public class LibroView {
 
         String autor;
         do {
-            System.out.print(Mensajes.PEDIR_DATO + "Autor: ");
+            mostrarTexto(Mensajes.PEDIR_DATO + "Autor: ");
             autor = scanner.nextLine().trim();
             if (autor.isEmpty()) {
                 mostrarTexto(Mensajes.ERROR_DATO);
@@ -116,14 +116,13 @@ public class LibroView {
 
     private void buscarPorId() {
         Mostrar.Titulo("Buscar Libro");
-        System.out.print(Mensajes.PEDIR_DATO + "ID del libro: ");
+        mostrarTexto(Mensajes.PEDIR_DATO + "ID del libro: ");
         String id = Validaciones.normalizarTexto(scanner.nextLine());
 
         try {
             LibroDTO l = libroController.buscarLibroPorId(id);
-            if (l != null) {
-                mostrarTexto("Encontrado -> ID: " + l.getId() + " | Título: " + l.getTitulo() + " | Autor: " + l.getAutor() + " | Estado: " + l.getEstado());
-            }
+            mostrarTexto("Encontrado -> ID: " + l.getId() + " | Título: " + l.getTitulo() + " | Autor: " + l.getAutor() + " | Estado: " + l.getEstado());
+
         } catch (IllegalArgumentException e) {
             mostrarTexto(e.getMessage());
         }
@@ -131,26 +130,23 @@ public class LibroView {
 
     private void modificar() {
         Mostrar.Titulo("Modificar Libro");
-        
+
         if (!libroController.hayRegistros()) {
             mostrarTexto(Mensajes.SIN_REGISTROS);
             return;
         }
-        
-        System.out.print(Mensajes.PEDIR_DATO + "ID del libro a modificar: ");
+
+        mostrarTexto(Mensajes.PEDIR_DATO + "ID del libro a modificar: ");
         String id = Validaciones.normalizarTexto(scanner.nextLine());
 
         try {
             LibroDTO existente = libroController.buscarLibroPorId(id);
-            if (existente == null) {
-                return;
-            }
 
             mostrarTexto(Mensajes.PEDIR_NUEVOS_DATOS);
 
             String titulo;
             do {
-                System.out.print("Nuevo Título: ");
+                mostrarTexto("Nuevo Título: ");
                 titulo = scanner.nextLine().trim();
                 if (titulo.isEmpty()) {
                     mostrarTexto(Mensajes.ERROR_DATO);
@@ -159,7 +155,7 @@ public class LibroView {
 
             String autor;
             do {
-                System.out.print("Nuevo Autor: ");
+                mostrarTexto("Nuevo Autor: ");
                 autor = scanner.nextLine().trim();
                 if (autor.isEmpty()) {
                     mostrarTexto(Mensajes.ERROR_DATO);
@@ -168,7 +164,7 @@ public class LibroView {
 
             Estado estado = null;
             do {
-                System.out.print("Nuevo Estado (DISPONIBLE, PRESTADO): ");
+                mostrarTexto("Nuevo Estado (DISPONIBLE, PRESTADO): ");
                 String estadoStr = Validaciones.normalizarTexto(scanner.nextLine());
                 try {
                     estado = Estado.valueOf(estadoStr.trim().toUpperCase());
@@ -192,7 +188,7 @@ public class LibroView {
             return;
         }
 
-        System.out.print(Mensajes.PEDIR_DATO + "ID del libro a eliminar: ");
+        mostrarTexto(Mensajes.PEDIR_DATO + "ID del libro a eliminar: ");
         String id = Validaciones.normalizarTexto(scanner.nextLine());
 
         try {

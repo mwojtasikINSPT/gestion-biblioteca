@@ -59,12 +59,12 @@ public class ConsultasView {
             return;
         }
 
-        System.out.print(Mensajes.PEDIR_DATO + "ID del lector: ");
+        mostrarTexto(Mensajes.PEDIR_DATO + "ID del lector: ");
         String idLector = Validaciones.normalizarTexto(scanner.nextLine());
 
         try {
             String resultado = consultasController.consultarLibroPrestadoALector(idLector);
-            System.out.println("\n" + resultado);
+            mostrarTexto("\n" + resultado);
         } catch (IllegalArgumentException e) {
             mostrarTexto(e.getMessage());
         }
@@ -78,12 +78,12 @@ public class ConsultasView {
             return;
         }
 
-        System.out.print(Mensajes.PEDIR_DATO + "ID del bibliotecario: ");
+        mostrarTexto(Mensajes.PEDIR_DATO + "ID del bibliotecario: ");
         String idBibliotecario = Validaciones.normalizarTexto(scanner.nextLine());
 
         try {
             String resultado = consultasController.consultarLectoresPorBibliotecario(idBibliotecario);
-            System.out.println("\n" + resultado);
+            mostrarTexto("\n" + resultado);
         } catch (IllegalArgumentException e) {
             mostrarTexto(e.getMessage());
         }
@@ -97,12 +97,12 @@ public class ConsultasView {
             return;
         }
 
-        System.out.print(Mensajes.PEDIR_DATO + "ID del lector: ");
+        mostrarTexto(Mensajes.PEDIR_DATO + "ID del lector: ");
         String idLector = Validaciones.normalizarTexto(scanner.nextLine());
 
         try {
             String resultado = consultasController.consultarBibliotecarioDeLector(idLector);
-            System.out.println("\n" + resultado);
+            mostrarTexto("\n" + resultado);
         } catch (IllegalArgumentException e) {
             mostrarTexto(e.getMessage());
         }

@@ -5,13 +5,13 @@ import daos.BibliotecarioDAO;
 import daos.LectorDAO;
 import daos.LibroDAO;
 import daos.PrestamoDAO;
-import dtos.AsignacionDTO;
 import dtos.BibliotecarioDTO;
-import dtos.LectorDTO;
-import dtos.LibroDTO;
-import dtos.PrestamoDTO;
 import java.util.List;
 import java.util.stream.Collectors;
+import models.Asignacion;
+import models.Lector;
+import models.Libro;
+import models.Prestamo;
 
 public class ConsultasController {
 
@@ -31,13 +31,13 @@ public class ConsultasController {
 
     // 1. Consultar el libro prestado a un lector
     public String consultarLibroPrestadoALector(String idLector) {
-        LectorDTO lector = lectorDAO.obtenerPorId(idLector);
+        Lector lector = lectorDAO.obtenerPorId(idLector);
         if (lector == null) {
             throw new IllegalArgumentException("No existe un lector con el ID: " + idLector);
         }
 
         // Buscar préstamos activos del lector
-        List<PrestamoDTO> prestamos = prestamoDAO.obtenerRegistros().stream()
+        List<Prestamo> prestamos = prestamoDAO.obtenerRegistros().stream()
                 .filter(p -> p.getIdLector().equalsIgnoreCase(idLector))
                 .collect(Collectors.toList());
 
@@ -50,8 +50,8 @@ public class ConsultasController {
                 .append(" (DNI: ").append(lector.getDni()).append(")\n");
 
         resultado.append("Libro(s) prestado(s):\n");
-        for (PrestamoDTO p : prestamos) {
-            LibroDTO libro = libroDAO.obtenerPorId(p.getIdLibro());
+        for (Prestamo p : prestamos) {
+            Libro libro = libroDAO.obtenerPorId(p.getIdLibro());
             if (libro != null) {
                 resultado.append(" - [ID: ").append(libro.getId()).append("] ").append(libro.getTitulo())
                         .append(" (Autor: ").append(libro.getAutor()).append(")\n");
@@ -67,7 +67,7 @@ public class ConsultasController {
             throw new IllegalArgumentException("No existe un bibliotecario con el ID: " + idBibliotecario);
         }
 
-        List<AsignacionDTO> asignaciones = asignacionDAO.obtenerRegistros().stream()
+        List<Asignacion> asignaciones = asignacionDAO.obtenerRegistros().stream()
                 .filter(a -> a.getIdBibliotecario().equalsIgnoreCase(idBibliotecario))
                 .collect(Collectors.toList());
 
@@ -79,8 +79,8 @@ public class ConsultasController {
         resultado.append("Datos del Bibliotecario: ").append(bibliotecario.getNombre()).append(" ").append(bibliotecario.getApellido()).append("\n");
         resultado.append("Lectores asignados:\n");
 
-        for (AsignacionDTO a : asignaciones) {
-            LectorDTO lector = lectorDAO.obtenerPorId(a.getIdLector());
+        for (Asignacion a : asignaciones) {
+            Lector lector = lectorDAO.obtenerPorId(a.getIdLector());
             if (lector != null) {
                 resultado.append(" - [ID: ").append(lector.getId()).append("] ").append(lector.getNombre())
                         .append(" ").append(lector.getApellido()).append(" (DNI: ").append(lector.getDni()).append(")\n");
@@ -91,12 +91,12 @@ public class ConsultasController {
 
     // 3. Consultar el bibliotecario asignado a un lector
     public String consultarBibliotecarioDeLector(String idLector) {
-        LectorDTO lector = lectorDAO.obtenerPorId(idLector);
+        Lector lector = lectorDAO.obtenerPorId(idLector);
         if (lector == null) {
             throw new IllegalArgumentException("No existe un lector con el ID: " + idLector);
         }
 
-        AsignacionDTO asignacion = asignacionDAO.obtenerRegistros().stream()
+        Asignacion asignacion = asignacionDAO.obtenerRegistros().stream()
                 .filter(a -> a.getIdLector().equalsIgnoreCase(idLector))
                 .findFirst()
                 .orElse(null);

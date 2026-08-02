@@ -1,19 +1,19 @@
 package daos;
 
-import dtos.LibroDTO;
 import models.Estado;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import models.Libro;
 
-public class LibroDAO implements ICrud<LibroDTO, String> {
+public class LibroDAO implements ICrud<Libro, String> {
 
     private final String ARCHIVO = "libros.txt";
     private final String ARCHIVO_HISTORICOS = "librosIdHistoricos.txt";
 
     @Override
-    public List<LibroDTO> obtenerRegistros() {
-        List<LibroDTO> libros = new ArrayList<>();
+    public List<Libro> obtenerRegistros() {
+        List<Libro> libros = new ArrayList<>();
         File file = new File(ARCHIVO);
         if (!file.exists()) {
             return libros;
@@ -23,7 +23,8 @@ public class LibroDAO implements ICrud<LibroDTO, String> {
             while ((linea = br.readLine()) != null) {
                 String[] partes = linea.split(",");
                 if (partes.length >= 4) {
-                    LibroDTO libro = new LibroDTO(partes[0], partes[1], partes[2], Estado.valueOf(partes[3]));
+                    // instancio el Modelo real
+                    Libro libro = new Libro(partes[0], partes[1], partes[2], Estado.valueOf(partes[3]));
                     libros.add(libro);
                 }
             }
@@ -33,9 +34,9 @@ public class LibroDAO implements ICrud<LibroDTO, String> {
         return libros;
     }
 
-    public void guardarTodos(List<LibroDTO> libros) {
+    public void guardarTodos(List<Libro> libros) {
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(ARCHIVO))) {
-            for (LibroDTO libro : libros) {
+            for (Libro libro : libros) {
                 bw.write(libro.getId() + ","
                         + libro.getTitulo() + ","
                         + libro.getAutor() + ","
@@ -76,16 +77,16 @@ public class LibroDAO implements ICrud<LibroDTO, String> {
     }
 
     @Override
-    public boolean agregar(LibroDTO libro) {
+    public boolean agregar(Libro libro) {
         try {
-            List<LibroDTO> lista = obtenerRegistros();
-            
+            List<Libro> lista = obtenerRegistros();
+
             // Validamos si el libro ya existe para retornar false
             boolean existe = lista.stream().anyMatch(l -> l.getId().equalsIgnoreCase(libro.getId()));
             if (existe) {
-                return false; 
+                return false;
             }
-            
+
             lista.add(libro);
             guardarTodos(lista);
             guardarIdHistorico(libro.getId());
@@ -96,51 +97,45 @@ public class LibroDAO implements ICrud<LibroDTO, String> {
     }
 
     @Override
-    public LibroDTO obtenerPorId(String id) {
-        try {
-            return obtenerRegistros().stream()
-                    .filter(l -> l.getId().equalsIgnoreCase(id))
-                    .findFirst()
-                    .orElse(null);
-        } catch (Exception e) {
-            throw new RuntimeException("Excepción al buscar el libro por ID: " + e.getMessage(), e);
-        }
+    public Libro obtenerPorId(String id) {
+
+        return obtenerRegistros().stream()
+                .filter(l -> l.getId().equalsIgnoreCase(id))
+                .findFirst()
+                .orElse(null);
+
     }
 
     @Override
-    public boolean modificar(LibroDTO libroModificado) {
-        try {
-            List<LibroDTO> lista = obtenerRegistros();
-            for (int i = 0; i < lista.size(); i++) {
-                if (lista.get(i).getId().equalsIgnoreCase(libroModificado.getId())) {
-                    lista.set(i, libroModificado);
-                    guardarTodos(lista);
-                    return true;
-                }
+    public boolean modificar(Libro libroModificado) {
+
+        List<Libro> lista = obtenerRegistros();
+        for (int i = 0; i < lista.size(); i++) {
+            if (lista.get(i).getId().equalsIgnoreCase(libroModificado.getId())) {
+                lista.set(i, libroModificado);
+                guardarTodos(lista);
+                return true;
             }
-            // Retorna false si recorrió toda la lista y no encontró el ID
-            return false; 
-        } catch (Exception e) {
-            throw new RuntimeException("Excepción al intentar modificar un libro: " + e.getMessage(), e);
         }
+        // Retorna false si recorrió toda la lista y no encontró el ID
+        return false;
+
     }
 
     @Override
     public boolean eliminar(String codigo) {
-        try {
-            List<LibroDTO> lista = obtenerRegistros();
-            boolean eliminado = lista.removeIf(c -> c.getId().equalsIgnoreCase(codigo));
 
-            if (eliminado) {
-                guardarTodos(lista);
-                return true;
-            }
-            
-            // Retorna false si no se encontró el elemento a eliminar
-            return false;
-        } catch (Exception e) {
-            throw new RuntimeException("Excepción al intentar eliminar un libro: " + e.getMessage(), e);
+        List<Libro> lista = obtenerRegistros();
+        boolean eliminado = lista.removeIf(c -> c.getId().equalsIgnoreCase(codigo));
+
+        if (eliminado) {
+            guardarTodos(lista);
+            return true;
         }
+
+        // Retorna false si no se encontró el elemento a eliminar
+        return false;
+
     }
-        
+
 }

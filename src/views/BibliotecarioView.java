@@ -5,9 +5,7 @@ import dtos.BibliotecarioDTO;
 import utils.Mensajes;
 import utils.Mostrar;
 import utils.Validaciones;
-import java.util.List;
 import java.util.Scanner;
-import java.util.stream.Collectors;
 
 public class BibliotecarioView {
 
@@ -65,26 +63,25 @@ public class BibliotecarioView {
     private void agregar() {
         Mostrar.Titulo("Agregar Bibliotecario");
 
-        String idGenerado = Validaciones.generarSiguienteId(bibliotecarioController.listarBibliotecarios().stream().map(BibliotecarioDTO::getId).collect(Collectors.toList()),
-                bibliotecarioController.obtenerIdsHistoricos(),
-                "B");
-
+        // Muestro el ID generado de antemano
+        String idGenerado = bibliotecarioController.obtenerSiguienteId();
         mostrarTexto("ID asignado automáticamente: " + idGenerado);
 
-        boolean dniRepetido;
-
+        // Pido y valido el DNI
         mostrarTexto(Mensajes.PEDIR_DATO + "DNI (8 dígitos): ");
         String dni = scanner.nextLine();
-        dniRepetido = bibliotecarioController.existeDni(dni);
 
         if (!Validaciones.esDniValido(dni)) {
             mostrarTexto(Mensajes.ERROR_DATO);
             return;
-        } else if (dniRepetido) {
+        }
+
+        if (bibliotecarioController.existeDni(dni)) {
             mostrarTexto(Mensajes.DATO_DUPLICADO);
             return;
         }
 
+        // Pido y valido el nombre
         String nombre;
         do {
             mostrarTexto(Mensajes.PEDIR_DATO + "Nombre: ");
@@ -94,6 +91,7 @@ public class BibliotecarioView {
             }
         } while (!Validaciones.esTextoValido(nombre));
 
+        // Pido y valido el apellido
         String apellido;
         do {
             mostrarTexto(Mensajes.PEDIR_DATO + "Apellido: ");
@@ -104,6 +102,7 @@ public class BibliotecarioView {
         } while (!Validaciones.esTextoValido(apellido));
 
         try {
+            // Guardo pasando el ID que ya le mostré al usuario
             bibliotecarioController.agregarBibliotecario(idGenerado, dni, nombre, apellido);
             mostrarTexto(Mensajes.EXITO_GUARDAR);
         } catch (IllegalArgumentException e) {
@@ -113,102 +112,93 @@ public class BibliotecarioView {
 
     private void listar() {
         Mostrar.Titulo("Lista de Bibliotecarios");
-        List<BibliotecarioDTO> bibliotecarios = bibliotecarioController.listarBibliotecarios();
 
-        if (bibliotecarios.isEmpty()) {
+        // Verifico si hay registros cargados antes de listar
+        if (!bibliotecarioController.hayRegistros()) {
             mostrarTexto(Mensajes.SIN_REGISTROS);
             return;
         }
 
-        for (BibliotecarioDTO b : bibliotecarios) {
-            mostrarTexto("ID: " + b.getId() + " | DNI: " + b.getDni() + " | " + b.getNombre() + " " + b.getApellido());
+        // Recorro y muestro cada bibliotecario con su formato correspondiente
+        for (BibliotecarioDTO b : bibliotecarioController.listarBibliotecarios()) {
+            String detalle = "Bibliotecario [" + b.getId() + "]:\n"
+                    + "     DNI:      " + b.getDni() + "\n"
+                    + "     Nombre:   " + b.getNombre() + " " + b.getApellido();
+
+            mostrarTexto(detalle);
         }
     }
 
     private void buscarPorId() {
         Mostrar.Titulo("Buscar Bibliotecario");
+        
+        // Pido el ID del bibliotecario
         mostrarTexto(Mensajes.PEDIR_DATO + "ID del bibliotecario: ");
         String id = Validaciones.normalizarTexto(scanner.nextLine());
 
         try {
+            // Busco el bibliotecario (si no existe, el controlador ya lanza la excepción)
             BibliotecarioDTO b = bibliotecarioController.buscarBibliotecarioPorId(id);
-            if (b != null) {
-                mostrarTexto("Encontrado -> ID: " + b.getId() + " | DNI: " + b.getDni() + " | " + b.getNombre() + " " + b.getApellido());
-            } else {
-                Mostrar.ErrorNoEncontrado("Bibliotecario", id);
-            }
+            
+            // Muestro los datos encontrados
+            mostrarTexto("Encontrado -> ID: " + b.getId() + " | DNI: " + b.getDni() + " | " + b.getNombre() + " " + b.getApellido());
+            
         } catch (IllegalArgumentException e) {
+            // Muestro el mensaje de error capturado
             mostrarTexto(e.getMessage());
         }
     }
 
     private void modificar() {
         Mostrar.Titulo("Modificar Bibliotecario");
-        
+
+        // Verifico si hay registros cargados antes de continuar
         if (!bibliotecarioController.hayRegistros()) {
             mostrarTexto(Mensajes.SIN_REGISTROS);
             return;
         }
-        
+
+        // Pido el ID del bibliotecario a modificar
         mostrarTexto(Mensajes.PEDIR_DATO + "ID del bibliotecario a modificar: ");
         String id = Validaciones.normalizarTexto(scanner.nextLine());
 
-        BibliotecarioDTO existente;
         try {
-            existente = bibliotecarioController.buscarBibliotecarioPorId(id);
-        } catch (IllegalArgumentException e) {
-            Mostrar.ErrorNoEncontrado("Bibliotecario", id);
-            return;
-        }
-        
-        if (existente == null) {
-            Mostrar.ErrorNoEncontrado("Bibliotecario", id);
-            return;
-        }
+            // Verifico que el bibliotecario exista antes de pedir los nuevos datos
+            BibliotecarioDTO bibliotecarioActual = bibliotecarioController.buscarBibliotecarioPorId(id);
 
-        mostrarTexto(Mensajes.PEDIR_NUEVOS_DATOS);
-
-        String dni;
-        boolean dniRepetido;
-
-        do {
-            mostrarTexto("Nuevo DNI (8 dígitos): ");
-            dni = scanner.nextLine();
-            dniRepetido = bibliotecarioController.existeDni(dni);
-            
-            if (!dni.equals(existente.getDni()) && dniRepetido) {
-                mostrarTexto("Ya existe un bibliotecario registrado con ese DNI.");
-                dniRepetido = true;
-            } else {
-                dniRepetido = false;
-            }
+            // Pido y valido el nuevo DNI
+            mostrarTexto(Mensajes.PEDIR_DATO + "Nuevo DNI (8 dígitos): ");
+            String dni = scanner.nextLine();
 
             if (!Validaciones.esDniValido(dni)) {
                 mostrarTexto(Mensajes.ERROR_DATO);
+                return;
             }
-        } while (!Validaciones.esDniValido(dni) || dniRepetido);
 
-        String nombre;
-        do {
-            mostrarTexto("Nuevo Nombre: ");
-            nombre = Validaciones.normalizarTexto(scanner.nextLine());
-            if (!Validaciones.esTextoValido(nombre)) {
-                mostrarTexto(Mensajes.ERROR_DATO);
-            }
-        } while (!Validaciones.esTextoValido(nombre));
+            // Pido y valido el nuevo nombre
+            String nombre;
+            do {
+                mostrarTexto(Mensajes.PEDIR_DATO + "Nuevo nombre: ");
+                nombre = Validaciones.normalizarTexto(scanner.nextLine());
+                if (!Validaciones.esTextoValido(nombre)) {
+                    mostrarTexto(Mensajes.ERROR_DATO);
+                }
+            } while (!Validaciones.esTextoValido(nombre));
 
-        String apellido;
-        do {
-            mostrarTexto("Nuevo Apellido: ");
-            apellido = Validaciones.normalizarTexto(scanner.nextLine());
-            if (!Validaciones.esTextoValido(apellido)) {
-                mostrarTexto(Mensajes.ERROR_DATO);
-            }
-        } while (!Validaciones.esTextoValido(apellido));
+            // Pido y valido el nuevo apellido
+            String apellido;
+            do {
+                mostrarTexto(Mensajes.PEDIR_DATO + "Nuevo apellido: ");
+                apellido = Validaciones.normalizarTexto(scanner.nextLine());
+                if (!Validaciones.esTextoValido(apellido)) {
+                    mostrarTexto(Mensajes.ERROR_DATO);
+                }
+            } while (!Validaciones.esTextoValido(apellido));
 
-        try {
+            // Actualizo los datos del bibliotecario
             bibliotecarioController.modificarBibliotecario(id, dni, nombre, apellido);
             mostrarTexto(Mensajes.EXITO_ACTUALIZAR);
+
         } catch (IllegalArgumentException e) {
             mostrarTexto(e.getMessage());
         }
@@ -217,15 +207,18 @@ public class BibliotecarioView {
     private void eliminar() {
         Mostrar.Titulo("Eliminar Bibliotecario");
 
-        if (bibliotecarioController.listarBibliotecarios().isEmpty()) {
+        // Verifico si hay registros cargados antes de continuar
+        if (!bibliotecarioController.hayRegistros()) {
             mostrarTexto(Mensajes.SIN_REGISTROS);
             return;
         }
 
+        // Pido el ID del bibliotecario que quiero eliminar
         mostrarTexto(Mensajes.PEDIR_DATO + "ID del bibliotecario a eliminar: ");
         String id = Validaciones.normalizarTexto(scanner.nextLine());
 
         try {
+            // Elimino el bibliotecario por su ID
             bibliotecarioController.eliminarBibliotecario(id);
             mostrarTexto(Mensajes.EXITO_ELIMINAR);
         } catch (IllegalArgumentException e) {

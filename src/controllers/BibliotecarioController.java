@@ -12,6 +12,11 @@ public class BibliotecarioController {
         this.bibliotecarioDAO = new BibliotecarioDAO();
     }
 
+    public String obtenerSiguienteId() {
+        List<String> idsExistentes = bibliotecarioDAO.obtenerIdsHistoricos();
+        return utils.Validaciones.generarSiguienteId(idsExistentes, "B");
+    }
+
     public void agregarBibliotecario(String id, String dni, String nombre, String apellido) {
         BibliotecarioDTO bibliotecarioDTO = new BibliotecarioDTO(id, dni, nombre, apellido);
         boolean agregado = bibliotecarioDAO.agregar(bibliotecarioDTO);
@@ -19,10 +24,10 @@ public class BibliotecarioController {
             throw new IllegalArgumentException("Ya existe un bibliotecario con el ID: " + id);
         }
     }
-    
+
     public boolean hayRegistros() {
         // Llama al método que el DAO heredó automáticamente de la interfaz
-        return bibliotecarioDAO.hayRegistros(); 
+        return bibliotecarioDAO.hayRegistros();
     }
 
     public List<BibliotecarioDTO> listarBibliotecarios() {
@@ -55,7 +60,7 @@ public class BibliotecarioController {
     public boolean existeDni(String dni) {
         for (BibliotecarioDTO b : listarBibliotecarios()) {
             if (b.getDni().equals(dni)) {
-                return true; 
+                return true;
             }
         }
         return false;

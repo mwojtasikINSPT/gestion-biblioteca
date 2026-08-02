@@ -3,13 +3,16 @@ package controllers;
 import daos.LibroDAO;
 import daos.LectorDAO;
 import daos.PrestamoDAO;
-import dtos.LibroDTO;
-import dtos.LectorDTO;
 import dtos.PrestamoDTO;
+import java.util.ArrayList;
 import models.Estado;
 import java.util.List;
+import models.Prestamo;
+import models.Libro;
+import models.Lector;
 
 public class PrestamoController {
+
     private final PrestamoDAO prestamoDAO;
     private final LibroDAO libroDAO;
     private final LectorDAO lectorDAO;
@@ -21,16 +24,26 @@ public class PrestamoController {
     }
 
     public boolean hayRegistros() {
-        // Llama al método que el DAO heredó automáticamente de la interfaz
-        return prestamoDAO.hayRegistros(); 
-    }
-    
-    public List<PrestamoDTO> listarPrestamos() {
-        return prestamoDAO.obtenerRegistros();
+        return prestamoDAO.hayRegistros();
     }
 
-    public void registrarPrestamo(String codigoLibro, String idLector) {
-        LibroDTO libro = libroDAO.obtenerPorId(codigoLibro);
+    public List<PrestamoDTO> listarPrestamos() {
+        // Obtengo los modelos de la base de datos
+        List<Prestamo> prestamos = prestamoDAO.obtenerRegistros();
+        List<PrestamoDTO> listaDTO = new ArrayList<>();
+
+        // Copio los datos al DTO para la vista
+        for (Prestamo prestamo : prestamos) {
+            PrestamoDTO dto = new PrestamoDTO(prestamo.getId(), prestamo.getIdLibro(), prestamo.getIdLector());
+            listaDTO.add(dto);
+        }
+
+        return listaDTO;
+    }
+
+    public void registrarPrestamo(String idPrestamo, String codigoLibro, String idLector) {
+        // Busco la entidad original en la capa de datos
+        Libro libro = libroDAO.obtenerPorId(codigoLibro);
         if (libro == null) {
             throw new IllegalArgumentException("No existe un libro con el código: " + codigoLibro);
         }
@@ -39,7 +52,8 @@ public class PrestamoController {
             throw new IllegalArgumentException("El libro seleccionado no se encuentra disponible (Estado actual: " + libro.getEstado() + ")");
         }
 
-        LectorDTO lector = lectorDAO.obtenerPorId(idLector);
+        // Busco la entidad original en la capa de datos
+        Lector lector = lectorDAO.obtenerPorId(idLector);
         if (lector == null) {
             throw new IllegalArgumentException("No existe un lector con el ID: " + idLector);
         }
@@ -50,10 +64,11 @@ public class PrestamoController {
             throw new IllegalArgumentException("El lector ya tiene un libro prestado.");
         }
 
-        PrestamoDTO prestamoDTO = new PrestamoDTO(codigoLibro, idLector);
-        boolean agregado = prestamoDAO.agregar(prestamoDTO);
+        // Instancio el modelo para enviarlo a persistencia
+        Prestamo nuevoPrestamo = new Prestamo(idPrestamo, codigoLibro, idLector);
+        boolean agregado = prestamoDAO.agregar(nuevoPrestamo);
         if (!agregado) {
-            throw new IllegalArgumentException("El sistema rechazó el registro. Ya existe un préstamo para este libro.");
+            throw new IllegalArgumentException("Error en el sistema: El ID de préstamo generado ya existe.");
         }
 
         libro.setEstado(Estado.PRESTADO);
@@ -61,17 +76,19 @@ public class PrestamoController {
     }
 
     public void cancelarPrestamo(String codigoLibro) {
-        PrestamoDTO prestamo = prestamoDAO.obtenerPorId(codigoLibro);
+        // Obtengo el préstamo activo verificando el código del libro
+        Prestamo prestamo = prestamoDAO.obtenerPrestamoPorLibro(codigoLibro);
         if (prestamo == null) {
             throw new IllegalArgumentException("No existe un préstamo activo para el libro con código: " + codigoLibro);
         }
 
-        boolean eliminado = prestamoDAO.eliminar(codigoLibro);
+        boolean eliminado = prestamoDAO.eliminar(prestamo.getId());
         if (!eliminado) {
             throw new IllegalArgumentException("No se pudo cancelar el préstamo en la base de datos.");
         }
 
-        LibroDTO libro = libroDAO.obtenerPorId(codigoLibro);
+        // Busco la entidad original para actualizar su estado
+        Libro libro = libroDAO.obtenerPorId(codigoLibro);
         if (libro != null) {
             libro.setEstado(Estado.DISPONIBLE);
             libroDAO.modificar(libro);
@@ -79,7 +96,13 @@ public class PrestamoController {
     }
 
     public boolean verificarLibroEnUso(String codigoLibro) {
-        PrestamoDTO prestamo = prestamoDAO.obtenerPorId(codigoLibro);
+        // Verifico existencia de préstamo para un libro específico
+        Prestamo prestamo = prestamoDAO.obtenerPrestamoPorLibro(codigoLibro);
         return prestamo != null;
+    }
+
+    public List<String> obtenerIdsHistoricos() {
+        // Retorno la lista de Ids históricos directamente de la capa de datos
+        return prestamoDAO.obtenerIdsHistoricos();
     }
 }

@@ -1,18 +1,18 @@
 package daos;
 
-import dtos.LectorDTO;
 import java.io.*;
 import java.util.ArrayList;
 import java.util.List;
+import models.Lector;
 
-public class LectorDAO implements ICrud<LectorDTO, String> {
+public class LectorDAO implements ICrud<Lector, String> {
 
     private final String ARCHIVO = "lectores.txt";
     private final String ARCHIVO_HISTORICOS = "lectoresIdHistoricos.txt";
 
     @Override
-    public List<LectorDTO> obtenerRegistros() {
-        List<LectorDTO> lectores = new ArrayList<>();
+    public List<Lector> obtenerRegistros() {
+        List<Lector> lectores = new ArrayList<>();
         File file = new File(ARCHIVO);
         if (!file.exists()) {
             return lectores;
@@ -22,7 +22,7 @@ public class LectorDAO implements ICrud<LectorDTO, String> {
             while ((linea = br.readLine()) != null) {
                 String[] partes = linea.split(",");
                 if (partes.length >= 4) {
-                    LectorDTO lector = new LectorDTO(partes[0], partes[1], partes[2], partes[3]);
+                    Lector lector = new Lector(partes[0], partes[1], partes[2], partes[3]);
                     lectores.add(lector);
                 }
             }
@@ -32,9 +32,9 @@ public class LectorDAO implements ICrud<LectorDTO, String> {
         return lectores;
     }
 
-    public void guardarTodos(List<LectorDTO> lectores) {
+    public void guardarTodos(List<Lector> lectores) {
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(ARCHIVO))) {
-            for (LectorDTO lector : lectores) {
+            for (Lector lector : lectores) {
                 bw.write(lector.getId() + "," + 
                          lector.getDni() + "," + 
                          lector.getNombre() + "," + 
@@ -46,7 +46,6 @@ public class LectorDAO implements ICrud<LectorDTO, String> {
         }
     }
 
-    // Método para leer todos los IDs que alguna vez existieron
     public List<String> obtenerIdsHistoricos() {
         List<String> ids = new ArrayList<>();
         File file = new File(ARCHIVO_HISTORICOS);
@@ -66,7 +65,6 @@ public class LectorDAO implements ICrud<LectorDTO, String> {
         return ids;
     }
 
-    // Método para agregar un ID al archivo histórico (usando append = true)
     private void guardarIdHistorico(String id) {
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(ARCHIVO_HISTORICOS, true))) {
             bw.write(id);
@@ -77,71 +75,59 @@ public class LectorDAO implements ICrud<LectorDTO, String> {
     }
 
     @Override
-    public boolean agregar(LectorDTO lector) {
-        try {
-            List<LectorDTO> lista = obtenerRegistros();
-            
-            // Verificamos si el lector ya existe
-            boolean existe = lista.stream().anyMatch(l -> l.getId().equalsIgnoreCase(lector.getId()));
-            if (existe) {
-                return false;
-            }
-            
-            lista.add(lector);
-            guardarTodos(lista);
-            
-            // Cada vez que se crea un lector, registramos su ID en el histórico
-            guardarIdHistorico(lector.getId());
-            return true;
-        } catch (Exception e) {
-            throw new RuntimeException("Excepción al intentar agregar un lector: " + e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public LectorDTO obtenerPorId(String id) {
-        try {
-            return obtenerRegistros().stream()
-                    .filter(l -> l.getId().equalsIgnoreCase(id))
-                    .findFirst()
-                    .orElse(null);
-        } catch (Exception e) {
-            throw new RuntimeException("Excepción al buscar el lector por ID: " + e.getMessage(), e);
-        }
-    }
-
-    @Override
-    public boolean modificar(LectorDTO lectorModificado) {
-        try {
-            List<LectorDTO> lista = obtenerRegistros();
-            for (int i = 0; i < lista.size(); i++) {
-                if (lista.get(i).getId().equalsIgnoreCase(lectorModificado.getId())) {
-                    lista.set(i, lectorModificado);
-                    guardarTodos(lista);
-                    return true;
-                }
-            }
+    public boolean agregar(Lector lector) {
+        // Obtengo los registros actuales
+        List<Lector> lista = obtenerRegistros();
+        
+        // Verifico si el lector ya existe
+        boolean existe = lista.stream().anyMatch(l -> l.getId().equalsIgnoreCase(lector.getId()));
+        if (existe) {
             return false;
-        } catch (Exception e) {
-            throw new RuntimeException("Excepción al intentar modificar un lector: " + e.getMessage(), e);
         }
+        
+        // Agrego a la lista y persisto los cambios
+        lista.add(lector);
+        guardarTodos(lista);
+        
+        // Registro el ID en el histórico
+        guardarIdHistorico(lector.getId());
+        return true;
+    }
+
+    @Override
+    public Lector obtenerPorId(String id) {
+        // Filtro y devuelvo el registro coincidente
+        return obtenerRegistros().stream()
+                .filter(l -> l.getId().equalsIgnoreCase(id))
+                .findFirst()
+                .orElse(null);
+    }
+
+    @Override
+    public boolean modificar(Lector lectorModificado) {
+        // Obtengo la lista para buscar y reemplazar el registro
+        List<Lector> lista = obtenerRegistros();
+        for (int i = 0; i < lista.size(); i++) {
+            if (lista.get(i).getId().equalsIgnoreCase(lectorModificado.getId())) {
+                lista.set(i, lectorModificado);
+                guardarTodos(lista);
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
     public boolean eliminar(String id) {
-        try {
-            List<LectorDTO> lista = obtenerRegistros();
-            boolean eliminado = lista.removeIf(l -> l.getId().equalsIgnoreCase(id));
+        // Obtengo la lista y elimino el registro si coincide el ID
+        List<Lector> lista = obtenerRegistros();
+        boolean eliminado = lista.removeIf(l -> l.getId().equalsIgnoreCase(id));
 
-            if (eliminado) {
-                guardarTodos(lista);
-                // Al eliminar de "lectores.txt", el ID NO se borra de "lectoresIdHistoricos.txt", 
-                // logrando así que el generador sepa que ese ID ya fue usado.
-                return true;
-            }
-            return false;
-        } catch (Exception e) {
-            throw new RuntimeException("Excepción al intentar eliminar un lector: " + e.getMessage(), e);
+        if (eliminado) {
+            // Guardo la lista actualizada conservando el ID en el registro histórico
+            guardarTodos(lista);
+            return true;
         }
+        return false;
     }
 }

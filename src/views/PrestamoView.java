@@ -6,6 +6,7 @@ import controllers.PrestamoController;
 import dtos.LectorDTO;
 import dtos.LibroDTO;
 import dtos.PrestamoDTO;
+import java.util.List;
 import utils.Mensajes;
 import utils.Mostrar;
 import java.util.Scanner;
@@ -65,8 +66,15 @@ public class PrestamoView {
         mostrarTexto(Mensajes.PEDIR_DATO + "ID del lector: ");
         String idLector = Validaciones.normalizarTexto(scanner.nextLine());
 
+        // Obtengo el historial de IDs para pasárselo a la validación
+        List<String> idsExistentes = prestamoController.obtenerIdsHistoricos();
+
+        // Genero el ID automáticamente con el prefijo "P"
+        String idPrestamo = Validaciones.generarSiguienteId(idsExistentes, "P");
+
         try {
-            prestamoController.registrarPrestamo(idLibro, idLector);
+            // Paso los tres argumentos en el orden exacto que exige el Controller
+            prestamoController.registrarPrestamo(idPrestamo, idLibro, idLector);
             mostrarTexto(Mensajes.EXITO_GUARDAR);
         } catch (IllegalArgumentException e) {
             mostrarTexto(e.getMessage());

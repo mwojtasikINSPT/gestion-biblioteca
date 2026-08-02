@@ -44,7 +44,7 @@ public class AsignacionView {
                     modificar();
                     break;
                 case 4:
-                    cancelar();
+                    eliminar();
                     break;
                 case 0:
                     mostrarTexto(Mensajes.VOLVIENDO);
@@ -70,7 +70,8 @@ public class AsignacionView {
         String idLector = Validaciones.normalizarTexto(scanner.nextLine());
 
         try {
-            asignacionController.asignarBibliotecarioALector(idBibliotecario, idLector);
+            String idGenerado = asignacionController.asignarBibliotecarioALector(idBibliotecario, idLector);
+            mostrarTexto("ID de Asignación generado: " + idGenerado);
             mostrarTexto(Mensajes.EXITO_GUARDAR);
         } catch (IllegalArgumentException e) {
             mostrarTexto(e.getMessage());
@@ -96,7 +97,7 @@ public class AsignacionView {
             String nombreLector = (lector != null) ? lector.getNombre() + " " + lector.getApellido() : "Lector no encontrado";
             String nombreBiblio = (biblio != null) ? biblio.getNombre() + " " + biblio.getApellido() : "Bibliotecario no encontrado";
 
-            String detalle = "Asignación:\n"
+            String detalle = "Asignación [" + a.getIdAsignacion() + "]:\n"
                     + "     Bibliotecario: [" + a.getIdBibliotecario() + "] " + nombreBiblio + "\n"
                     + "     Lector:        [" + a.getIdLector() + "] " + nombreLector;
 
@@ -126,8 +127,8 @@ public class AsignacionView {
         }
     }
 
-    private void cancelar() {
-        Mostrar.Titulo("Cancelar Asignación");
+    private void eliminar() {
+        Mostrar.Titulo("Eliminar Asignación");
 
         if (!asignacionController.hayRegistros()) {
             mostrarTexto(Mensajes.SIN_REGISTROS);
@@ -138,7 +139,7 @@ public class AsignacionView {
         String idLector = Validaciones.normalizarTexto(scanner.nextLine());
 
         try {
-            asignacionController.cancelarAsignacion(idLector);
+            asignacionController.eliminarAsignacion(idLector);
             mostrarTexto(Mensajes.EXITO_ELIMINAR);
         } catch (IllegalArgumentException e) {
             mostrarTexto(e.getMessage());
